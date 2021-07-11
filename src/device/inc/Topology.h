@@ -29,5 +29,7 @@ public:
 
     device_status_t gpuid_to_nodeid(uint32_t gpu_id, uint32_t *node_id);
 
+    device_status_t  GetNodeProperties(HSAuint32 NodeId,
+						HsaCoreProperties **NodeProperties);
     Device *device_;
 };

@@ -40,7 +40,7 @@ class QueueMgr {
     int handle_concrete_asic(struct queue *q,
 				struct ioctl_create_queue_args *args,
 				uint32_t NodeId);
-    uint32_t *convert_queue_ids(uint32_t NumQueues, HSA_QUEUEID *Queues);
+   // uint32_t *convert_queue_ids(uint32_t NumQueues, HSA_QUEUEID *Queues);
 
     device_status_t CreateQueue(uint32_t NodeId,
 					  HSA_QUEUE_TYPE Type,

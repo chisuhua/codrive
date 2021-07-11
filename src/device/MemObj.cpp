@@ -1,5 +1,6 @@
-#include "MemObj.h"
-#include "libhsakmt.h"
+#include "inc/MemObj.h"
+#include <cstring>
+// #include "libhsakmt.h"
 
 // Inserts node into freelist after place.
 // Assumes node will not be an end of the list (list has guard nodes).

@@ -151,3 +151,51 @@ device_status_t Topology::validate_nodeid_array(uint32_t **gpu_id_array,
 	return ret;
 }
 
+device_status_t  Topology::GetNodeProperties(HSAuint32 NodeId,
+						HsaCoreProperties **NodeProperties)
+{
+	device_status_t err;
+	uint32_t gpu_id;
+
+	if (!NodeProperties)
+		return DEVICE_STATUS_ERROR;
+
+	// pthread_mutex_lock(&hsakmt_mutex);
+
+	/* KFD ADD page 18, snapshot protocol violation */
+	if (!device_->system_) {
+		err = DEVICE_STATUS_ERROR;
+		assert(device_->system_);
+		goto out;
+	}
+
+	if (NodeId >= device_->system_->NumNodes) {
+		err = DEVICE_STATUS_ERROR;
+		goto out;
+	}
+
+	err = validate_nodeid(NodeId, &gpu_id);
+	if (err != DEVICE_STATUS_SUCCESS)
+		return err;
+
+	*NodeProperties = device_->props_[NodeId]->core;
+	/* For CPU only node don't add any additional GPU memory banks. */
+    /* schi move below logic to InitRegionList
+	if (gpu_id) {
+		if (topology_is_dgpu(get_device_id_by_gpu_id(gpu_id)))
+		uint64_t base, limit;
+			(*NodeProperties)->NumMemoryBanks += NUM_OF_DGPU_HEAPS;
+		else
+			(*NodeProperties)->NumMemoryBanks += NUM_OF_IGPU_HEAPS;
+		if (mm_get_aperture_base_and_limit(FMM_MMIO, gpu_id, &base,
+				&limit) == DEVICE_STATUS_SUCCESS)
+			(*NodeProperties)->NumMemoryBanks += 1;
+	}
+    */
+	err = DEVICE_STATUS_SUCCESS;
+
+out:
+	// pthread_mutex_unlock(&hsakmt_mutex);
+	return err;
+}
+

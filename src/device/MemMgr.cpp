@@ -430,9 +430,9 @@ device_status_t MemMgr::mm_init_process_apertures(unsigned int NumNodes, node_pr
 		device_->all_gpu_id_array[device_->all_gpu_id_array_size++] = process_apertures[i].gpu_id;
         // device_->gpu_info_table_[all_gpu_id_array_size++] = process_apertures[i].gpu_id;
 
-		gpu_mem_[gpu_mem_id]->lds_aperture.base = (void*)(process_apertures[i].lds_base);
+		gpu_mem_[gpu_mem_id]->lds_aperture.start = (void*)(process_apertures[i].lds_base);
 		gpu_mem_[gpu_mem_id]->lds_aperture.size = process_apertures[i].lds_limit - process_apertures[i].lds_base;
-		gpu_mem_[gpu_mem_id]->scratch_aperture.base = (void*)(process_apertures[i].scratch_base);
+		gpu_mem_[gpu_mem_id]->scratch_aperture.start = (void*)(process_apertures[i].scratch_base);
 		gpu_mem_[gpu_mem_id]->scratch_aperture.size = process_apertures[i].scratch_limit - process_apertures[i].scratch_base;
 
 		if (IS_CANONICAL_ADDR(process_apertures[i].gpuvm_limit)) {
@@ -555,11 +555,11 @@ device_status_t MemMgr::mm_init_process_apertures(unsigned int NumNodes, node_pr
 		if (!topology_is_svm_needed(gpu_mem_[gpu_mem_id].device_id))
 			continue;
             */
-		gpu_mem_[gpu_mem_id]->mmio_aperture.base = map_mmio(
+		gpu_mem_[gpu_mem_id]->mmio_aperture.start = map_mmio(
 				gpu_mem_[gpu_mem_id]->node_id,
 				gpu_mem_[gpu_mem_id]->gpu_id,
 				-1/*kfd_fd*/);
-		if (gpu_mem_[gpu_mem_id]->mmio_aperture.base)
+		if (gpu_mem_[gpu_mem_id]->mmio_aperture.start)
 			gpu_mem_[gpu_mem_id]->mmio_aperture.size = PAGE_SIZE - 1;
 		else
 			ERROR("Failed to map remapped mmio page on gpu_mem %d\n",
@@ -1263,22 +1263,22 @@ device_status_t MemMgr::mm_get_aperture_base_and_limit(aperture_type_e aperture_
 		break;
 	case FMM_SCRATCH: {
 		//if (gpu_mem_[slot]->scratch_aperture->aperture_is_valid()) {
-			*aperture_base = (uint64_t)(gpu_mem_[slot]->scratch_aperture.base);
-			*aperture_limit = (uint64_t)(gpu_mem_[slot]->scratch_aperture.base) +
+			*aperture_base = (uint64_t)(gpu_mem_[slot]->scratch_aperture.start);
+			*aperture_limit = (uint64_t)(gpu_mem_[slot]->scratch_aperture.start) +
 			                  (uint64_t)(gpu_mem_[slot]->scratch_aperture.size);
 			err = DEVICE_STATUS_SUCCESS;
         }
 		break;
 	case FMM_LDS: {
-			*aperture_base = (uint64_t)(gpu_mem_[slot]->lds_aperture.base);
-			*aperture_limit = (uint64_t)(gpu_mem_[slot]->lds_aperture.base) +
+			*aperture_base = (uint64_t)(gpu_mem_[slot]->lds_aperture.start);
+			*aperture_limit = (uint64_t)(gpu_mem_[slot]->lds_aperture.start) +
 			                  (uint64_t)(gpu_mem_[slot]->lds_aperture.size);
 			err = DEVICE_STATUS_SUCCESS;
         }
 		break;
 	case FMM_MMIO: {
-			*aperture_base = (uint64_t)(gpu_mem_[slot]->mmio_aperture.base);
-			*aperture_limit = (uint64_t)(gpu_mem_[slot]->mmio_aperture.base) +
+			*aperture_base = (uint64_t)(gpu_mem_[slot]->mmio_aperture.start);
+			*aperture_limit = (uint64_t)(gpu_mem_[slot]->mmio_aperture.start) +
 			                  (uint64_t)(gpu_mem_[slot]->mmio_aperture.size);
 			err = DEVICE_STATUS_SUCCESS;
 		}
@@ -2023,11 +2023,11 @@ void MemMgr::release_mmio(void)
 	uint32_t gpu_mem_id;
 
 	for (gpu_mem_id = 0; (uint32_t)gpu_mem_id < gpu_mem_count_; gpu_mem_id++) {
-		if (!gpu_mem_[gpu_mem_id]->mmio_aperture.base)
+		if (!gpu_mem_[gpu_mem_id]->mmio_aperture.start)
 			continue;
-		mm_unmap_from_gpu(gpu_mem_[gpu_mem_id]->mmio_aperture.base);
-		munmap(gpu_mem_[gpu_mem_id]->mmio_aperture.base, PAGE_SIZE);
-		mm_release(gpu_mem_[gpu_mem_id]->mmio_aperture.base);
+		mm_unmap_from_gpu(gpu_mem_[gpu_mem_id]->mmio_aperture.start);
+		munmap(gpu_mem_[gpu_mem_id]->mmio_aperture.start, PAGE_SIZE);
+		mm_release(gpu_mem_[gpu_mem_id]->mmio_aperture.start);
 	}
 }
 

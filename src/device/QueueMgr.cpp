@@ -22,7 +22,7 @@ bool QueueMgr::update_ctx_save_restore_size(uint32_t nodeid, struct queue *q)
 {
 	HsaCoreProperties *node;
 
-	if (device_->GetNodeProperties(nodeid, &node))
+	if (topo_->GetNodeProperties(nodeid, &node))
 		return false;
 	if (node->NumFComputeCores && node->NumSIMDPerCU) {
 		uint32_t ctl_stack_size, wg_data_size;
@@ -140,7 +140,7 @@ device_status_t QueueMgr::CreateQueue(uint32_t NodeId,
 	/* By default, CUs are all turned on. Initialize cu_mask to '1
 	 * for all CU bits.
 	 */
-	if (device_->GetNodeProperties(NodeId, &props))
+	if (topo_->GetNodeProperties(NodeId, &props))
 		q->cu_mask_count = 0;
 	else {
 		cu_num = props->NumFComputeCores / props->NumSIMDPerCU;
@@ -211,7 +211,7 @@ device_status_t QueueMgr::CreateQueue(uint32_t NodeId,
 	err = doorbells_->map_doorbell(NodeId, gpu_id, doorbell_mmap_offset);
 
 	if (err != DEVICE_STATUS_SUCCESS) {
-		device_->DestroyQueue(q->queue_id);
+		DestroyQueue(q->queue_id);
 		free_queue(q);
 		return DEVICE_STATUS_ERROR;
 	}
@@ -357,7 +357,7 @@ device_status_t QueueMgr::AllocQueueGWS(HSA_QUEUEID        QueueId,
 		return DEVICE_STATUS_ERROR;
 }
 
-uint32_t *QueueMgr::convert_queue_ids(uint32_t NumQueues, HSA_QUEUEID *Queues)
+uint32_t *convert_queue_ids(uint32_t NumQueues, HSA_QUEUEID *Queues)
 {
 	uint32_t *queue_ids_ptr;
 	unsigned int i;

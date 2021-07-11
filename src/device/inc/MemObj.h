@@ -44,7 +44,7 @@ struct AddrRange {
 
 struct AddrRangeCmp
 {
-    bool operator() (const AddrRange& lhs, const AddrRange& rhs)
+    bool operator() (const AddrRange& lhs, const AddrRange& rhs) const
     {
         if ((lhs.start + lhs.size) < rhs.start) {
             return true;

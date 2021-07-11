@@ -264,7 +264,7 @@ device_status_t Debug::debug_trap(uint32_t NodeId,
 		if (device_->get_topo()->validate_nodeid(NodeId, &gpu_id) != DEVICE_STATUS_SUCCESS)
 			return DEVICE_STATUS_INVALID_HANDLE;
 
-		result = device_->GetNodeProperties(NodeId, &NodeProperties);
+		result = device_->get_topo()->GetNodeProperties(NodeId, &NodeProperties);
 
 		if (result != DEVICE_STATUS_SUCCESS)
 			return result;

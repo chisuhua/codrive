@@ -622,6 +622,7 @@ struct ioctl_get_system_prop_args {
     node_props_t *node_prop;
 };
 
+
 #define MAKE_GPUVM_APP_BASE(gpu_num) \
 	(((uint64_t)(gpu_num) << 61) + 0x1000000000000L)
 #define MAKE_GPUVM_APP_LIMIT(base, size) \
