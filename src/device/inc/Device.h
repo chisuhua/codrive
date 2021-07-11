@@ -1,14 +1,83 @@
 #pragma once
 
+#include <functional>
+
 #include "inc/hsakmttypes.h"
 #include "core/IDevice.h"
 #include "core/IMemoryRegion.h"
+#include "inc/DeviceInfo.h"
+#include "cmdio/cmdio.h"
+
+class MemMgr;
+class Doorbells;
+class Debug;
+class Process;
+class Topology;
+
+using QueueAllocator = std::function<void *(size_t, size_t, uint32_t)>;
+using QueueDeallocator = std::function<void(void *)>;
+
+struct gpu_info {
+    uint32_t id;
+};
 
 class Device : public core::IDevice {
 public:
     core::IMemoryRegion *system_region_;
     core::IRuntime* runtime_;
     std::mutex mutex_;
+    MemMgr* mm_;
+    Doorbells* doorbells_;
+    Debug* debug_;
+    Process* process_;
+    DeviceInfo *device_info_;
+    Topology*               topo_;
+    bool             zfb_support_ {true};
+
+    QueueAllocator queue_allocator_;
+    QueueDeallocator queue_deallocator_;
+    uint32_t *all_gpu_id_array {nullptr};
+    uint32_t all_gpu_id_array_size {0};
+    // std::vector<gpu_info>     gpu_info_table_;
+    //
+    HsaSystemProperties *system_;
+    std::vector<node_props_t*> props_;
+    bool is_dgpu_;
+
+    int PAGE_SIZE;
+    int PAGE_SHIFT;
+
+    MemMgr* get_mm() {
+        return mm_;
+    }
+
+    Debug* get_debug() {
+        return debug_;
+    }
+
+    Topology* get_topo() {
+        return topo_;
+    }
+
+    Process* get_process() {
+        return process_;
+    }
+
+    bool is_dgpu(void) {
+        return is_dgpu_;
+    };
+
+    void set_dgpu(void) {
+        is_dgpu_ = true;
+    }
+
+    void init_page_size(void);
+    device_info *get_device_info_by_dev_id(uint16_t dev_id) ;
+    void init_queue_allocator(QueueAllocator queue_allocator, QueueDeallocator queue_deallocator) {
+        queue_allocator_ = queue_allocator;
+        queue_deallocator_ = queue_deallocator;
+    }
+
 
     device_status_t Open(void);
     device_status_t Close(void);
