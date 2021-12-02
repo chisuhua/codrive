@@ -65,25 +65,6 @@ static const struct opu2kgd_calls *opu2kgd_funcs[] = {
 	[CHIP_YELLOW_CARP] = &gfx_v10_3_opu2kgd,
 };
 
-#ifdef OPU_SUPPORT_IOMMU_V2
-static const struct opu_device_info kaveri_device_info = {
-	.asic_family = CHIP_KAVERI,
-	.asic_name = "kaveri",
-	.max_pasid_bits = 16,
-	/* max num of queues for KV.TODO should be a dynamic value */
-	.max_no_of_hqd	= 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = false,
-	.needs_iommu_device = true,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
 
 static const struct opu_device_info carrizo_device_info = {
 	.asic_family = CHIP_CARRIZO,
@@ -103,507 +84,10 @@ static const struct opu_device_info carrizo_device_info = {
 	.num_xgmi_sdma_engines = 0,
 	.num_sdma_queues_per_engine = 2,
 };
-#endif
-
-static const struct opu_device_info raven_device_info = {
-	.asic_family = CHIP_RAVEN,
-	.asic_name = "raven",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 1,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info hawaii_device_info = {
-	.asic_family = CHIP_HAWAII,
-	.asic_name = "hawaii",
-	.max_pasid_bits = 16,
-	/* max num of queues for KV.TODO should be a dynamic value */
-	.max_no_of_hqd	= 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = false,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info tonga_device_info = {
-	.asic_family = CHIP_TONGA,
-	.asic_name = "tonga",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = false,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info fiji_device_info = {
-	.asic_family = CHIP_FIJI,
-	.asic_name = "fiji",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info fiji_vf_device_info = {
-	.asic_family = CHIP_FIJI,
-	.asic_name = "fiji",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-
-static const struct opu_device_info polaris10_device_info = {
-	.asic_family = CHIP_POLARIS10,
-	.asic_name = "polaris10",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info polaris10_vf_device_info = {
-	.asic_family = CHIP_POLARIS10,
-	.asic_name = "polaris10",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info polaris11_device_info = {
-	.asic_family = CHIP_POLARIS11,
-	.asic_name = "polaris11",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info polaris12_device_info = {
-	.asic_family = CHIP_POLARIS12,
-	.asic_name = "polaris12",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info vegam_device_info = {
-	.asic_family = CHIP_VEGAM,
-	.asic_name = "vegam",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 4,
-	.ih_ring_entry_size = 4 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_cik,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info vega10_device_info = {
-	.asic_family = CHIP_VEGA10,
-	.asic_name = "vega10",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info vega10_vf_device_info = {
-	.asic_family = CHIP_VEGA10,
-	.asic_name = "vega10",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info vega12_device_info = {
-	.asic_family = CHIP_VEGA12,
-	.asic_name = "vega12",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info vega20_device_info = {
-	.asic_family = CHIP_VEGA20,
-	.asic_name = "vega20",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd	= 24,
-	.doorbell_size	= 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info arcturus_device_info = {
-	.asic_family = CHIP_ARCTURUS,
-	.asic_name = "arcturus",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd	= 24,
-	.doorbell_size	= 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 6,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info aldebaran_device_info = {
-	.asic_family = CHIP_ALDEBARAN,
-	.asic_name = "aldebaran",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd	= 24,
-	.doorbell_size	= 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 3,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info renoir_device_info = {
-	.asic_family = CHIP_RENOIR,
-	.asic_name = "renoir",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.supports_cwsr = true,
-	.needs_iommu_device = false,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 1,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info navi10_device_info = {
-	.asic_family = CHIP_NAVI10,
-	.asic_name = "navi10",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info navi12_device_info = {
-	.asic_family = CHIP_NAVI12,
-	.asic_name = "navi12",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info navi14_device_info = {
-	.asic_family = CHIP_NAVI14,
-	.asic_name = "navi14",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info sienna_cichlid_device_info = {
-	.asic_family = CHIP_SIENNA_CICHLID,
-	.asic_name = "sienna_cichlid",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 4,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info navy_flounder_device_info = {
-	.asic_family = CHIP_NAVY_FLOUNDER,
-	.asic_name = "navy_flounder",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info vangogh_device_info = {
-	.asic_family = CHIP_VANGOGH,
-	.asic_name = "vangogh",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 1,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
-
-static const struct opu_device_info dimgrey_cavefish_device_info = {
-	.asic_family = CHIP_DIMGREY_CAVEFISH,
-	.asic_name = "dimgrey_cavefish",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 2,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info beige_goby_device_info = {
-	.asic_family = CHIP_BEIGE_GOBY,
-	.asic_name = "beige_goby",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = true,
-	.num_sdma_engines = 1,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 8,
-};
-
-static const struct opu_device_info yellow_carp_device_info = {
-	.asic_family = CHIP_YELLOW_CARP,
-	.asic_name = "yellow_carp",
-	.max_pasid_bits = 16,
-	.max_no_of_hqd  = 24,
-	.doorbell_size  = 8,
-	.ih_ring_entry_size = 8 * sizeof(uint32_t),
-	.event_interrupt_class = &event_interrupt_class_v9,
-	.num_of_watch_points = 4,
-	.mqd_size_aligned = MQD_SIZE_ALIGNED,
-	.needs_iommu_device = false,
-	.supports_cwsr = true,
-	.needs_pci_atomics = false,
-	.num_sdma_engines = 1,
-	.num_xgmi_sdma_engines = 0,
-	.num_sdma_queues_per_engine = 2,
-};
 
 /* For each entry, [0] is regular and [1] is virtualisation device. */
 static const struct opu_device_info *opu_supported_devices[][2] = {
-#ifdef OPU_SUPPORT_IOMMU_V2
-	[CHIP_KAVERI] = {&kaveri_device_info, NULL},
 	[CHIP_CARRIZO] = {&carrizo_device_info, NULL},
-#endif
-	[CHIP_RAVEN] = {&raven_device_info, NULL},
-	[CHIP_HAWAII] = {&hawaii_device_info, NULL},
-	[CHIP_TONGA] = {&tonga_device_info, NULL},
-	[CHIP_FIJI] = {&fiji_device_info, &fiji_vf_device_info},
-	[CHIP_POLARIS10] = {&polaris10_device_info, &polaris10_vf_device_info},
-	[CHIP_POLARIS11] = {&polaris11_device_info, NULL},
-	[CHIP_POLARIS12] = {&polaris12_device_info, NULL},
-	[CHIP_VEGAM] = {&vegam_device_info, NULL},
-	[CHIP_VEGA10] = {&vega10_device_info, &vega10_vf_device_info},
-	[CHIP_VEGA12] = {&vega12_device_info, NULL},
-	[CHIP_VEGA20] = {&vega20_device_info, NULL},
-	[CHIP_RENOIR] = {&renoir_device_info, NULL},
-	[CHIP_ARCTURUS] = {&arcturus_device_info, &arcturus_device_info},
-	[CHIP_ALDEBARAN] = {&aldebaran_device_info, &aldebaran_device_info},
-	[CHIP_NAVI10] = {&navi10_device_info, NULL},
-	[CHIP_NAVI12] = {&navi12_device_info, &navi12_device_info},
-	[CHIP_NAVI14] = {&navi14_device_info, NULL},
-	[CHIP_SIENNA_CICHLID] = {&sienna_cichlid_device_info, &sienna_cichlid_device_info},
-	[CHIP_NAVY_FLOUNDER] = {&navy_flounder_device_info, &navy_flounder_device_info},
-	[CHIP_VANGOGH] = {&vangogh_device_info, NULL},
-	[CHIP_DIMGREY_CAVEFISH] = {&dimgrey_cavefish_device_info, &dimgrey_cavefish_device_info},
-	[CHIP_BEIGE_GOBY] = {&beige_goby_device_info, &beige_goby_device_info},
-	[CHIP_YELLOW_CARP] = {&yellow_carp_device_info, NULL},
 };
 
 static int opu_gtt_sa_init(struct opu_dev *opu, unsigned int buf_size,
@@ -703,188 +187,173 @@ static void opu_cwsr_init(struct opu_dev *opu)
 	}
 }
 
-static int opu_gws_init(struct opu_dev *opu)
+/**
+ * amdgpu_device_ip_init - run init for hardware IPs
+ *
+ * @adev: amdgpu_device pointer
+ *
+ * Main initialization pass for hardware IPs.  The list of all the hardware
+ * IPs that make up the asic is walked and the sw_init and hw_init callbacks
+ * are run.  sw_init initializes the software state associated with each IP
+ * and hw_init initializes the hardware associated with each IP.
+ * Returns 0 on success, negative error code on failure.
+ */
+static int amdgpu_device_ip_init(struct opu_device *odev)
 {
-	int ret = 0;
+	int i, err;
 
-	if (opu->dqm->sched_policy == OPU_SCHED_POLICY_NO_HWS)
-		return 0;
+    odev->num_ips = 0;
 
-	if (hws_gws_support
-		|| (opu->device_info->asic_family == CHIP_VEGA10
-			&& opu->mec2_fw_version >= 0x81b3)
-		|| (opu->device_info->asic_family >= CHIP_VEGA12
-			&& opu->device_info->asic_family <= CHIP_RAVEN
-			&& opu->mec2_fw_version >= 0x1b3)
-		|| (opu->device_info->asic_family == CHIP_ARCTURUS
-			&& opu->mec2_fw_version >= 0x30)
-		|| (opu->device_info->asic_family == CHIP_ALDEBARAN
-			&& opu->mec2_fw_version >= 0x28))
-		ret = amdgpu_amdopu_alloc_gws(opu->kgd,
-				amdgpu_amdopu_get_num_gws(opu->kgd), &opu->gws);
+    for (i = 0; i < (sizeof(odev->ips_type2idx) / sizeof(odev->ips_type2idx[0])); i++)
+        odev->ips_type2idx[i] = -1;
 
-	return ret;
+    if (odev->chip_type == OPU_CHIP_OPU) {
+        if (!(odev->pdev && (odev->pdev->device == DEVICE_ID_OPU ||
+                        odev->pdev->device == DEVICE_ID_OPU_VF)))
+        {
+            err = -ENODEV;
+            return err;
+        } else {
+            opu_chip_setup(odev);
+        }
+    } else {
+        err = -EINVAL;
+        return err;
+    }
+
+	for (i = 0; i < odev->num_ips; i++) {
+		if (!odev->ips[i].valid)
+			continue;
+        if (odev->ips[i].funcs->init) {
+            err = odev->ips[i].funcs->init(odev);
+            if (!err)
+                odev->ips[i].valid = true;
+        }
+	}
+
+    if (ret)
+        opu_device_ips_fini(odev);
+
+init_failed:
+	return r;
 }
 
-static void opu_smi_init(struct opu_dev *dev) {
-	INIT_LIST_HEAD(&dev->smi_clients);
-	spin_lock_init(&dev->smi_lock);
-}
-
-bool kgd2opu_device_init(struct opu_dev *opu,
-			 struct drm_device *ddev,
-			 const struct kgd2opu_shared_resources *gpu_resources)
+/**
+ * amdgpu_device_init - initialize the driver
+ *
+ * @adev: amdgpu_device pointer
+ * @flags: driver flags
+ *
+ * Initializes the driver info and hw (all asics).
+ * Returns 0 for success or an error on failure.
+ * Called at driver startup.
+ */
+int opu_device_init(struct opu_device *odev,
+		       uint32_t flags)
 {
-	unsigned int size, map_process_packet_size;
+    int ret;
+	struct drm_device *ddev = odev->ddev;
+    struct pci_bus *bus;
+	struct pci_dev *pdev = odev->pdev;
 
-	opu->ddev = ddev;
-	opu->mec_fw_version = amdgpu_amdopu_get_fw_version(opu->kgd,
-			KGD_ENGINE_MEC1);
-	opu->mec2_fw_version = amdgpu_amdopu_get_fw_version(opu->kgd,
-			KGD_ENGINE_MEC2);
-	opu->sdma_fw_version = amdgpu_amdopu_get_fw_version(opu->kgd,
-			KGD_ENGINE_SDMA1);
-	opu->shared_resources = *gpu_resources;
+    /* init BDF */
+    bus = pdev->bus;
+    odev->bdf.pci_domain = pci_domain_nr(bus);
+    odev->bdf.pci_bus = bus->number;
+    odev->bdf.pci_slot = PCI_SLOT(pdev->devfn);
+    odev->bdf.pci_func = PCI_FUNC(pdev->devfn);
 
-	opu->vm_info.first_vmid_opu = ffs(gpu_resources->compute_vmid_bitmap)-1;
-	opu->vm_info.last_vmid_opu = fls(gpu_resources->compute_vmid_bitmap)-1;
-	opu->vm_info.vmid_num_opu = opu->vm_info.last_vmid_opu
-			- opu->vm_info.first_vmid_opu + 1;
+	odev->shutdown = false;
+	odev->flags = flags;
 
-	/* Verify module parameters regarding mapped process number*/
-	if ((hws_max_conc_proc < 0)
-			|| (hws_max_conc_proc > opu->vm_info.vmid_num_opu)) {
-		dev_err(opu_device,
-			"hws_max_conc_proc %d must be between 0 and %d, use %d instead\n",
-			hws_max_conc_proc, opu->vm_info.vmid_num_opu,
-			opu->vm_info.vmid_num_opu);
-		opu->max_proc_per_quantum = opu->vm_info.vmid_num_opu;
-	} else
-		opu->max_proc_per_quantum = hws_max_conc_proc;
+	/* mutex initialization are all done here so we
+	 * can recall function without having locking issues */
+	mutex_init(&odev->lock);
+	mutex_init(&odev->res_lock);
+    spin_lock_init(&odev->job_lock);
+	mutex_init(&odev->core_info_lock);
+	mutex_init(&odev->profile_lock);
+	mutex_init(&odev->profile_thread_lock);
+	atomic_set(&odev->profile_count, 0);
+	atomic_set(&odev->retained, 0);
 
-	/* calculate max size of mqds needed for queues */
-	size = max_num_of_queues_per_device *
-			opu->device_info->mqd_size_aligned;
+    odev->cp        = 0;
+    odev->profile   = NULL;
+    odev->chip_type = flags & OPU_ASIC_MASK;
+
+    ret = opu_va_mgr_create(&g_opu_va_mgr);
+    if (ret)
+        goto err_va_mgr:
+
+	// r = amdgpu_device_check_arguments(odev);
+	// if (r) return r;
+
+	/* Registers mapping */
+	/* TODO: block userspace mapping of io register */
+	/*odev->rmmio_base = pci_resource_start(odev->pdev, 5);
+	odev->rmmio_size = pci_resource_len(odev->pdev, 5);
+
+	odev->rmmio = ioremap(odev->rmmio_base, odev->rmmio_size);
+	if (odev->rmmio == NULL) {
+		return -ENOMEM;
+	}
+	DRM_INFO("register mmio base: 0x%08X\n", (uint32_t)odev->rmmio_base);
+	DRM_INFO("register mmio size: %u\n", (unsigned)odev->rmmio_size);
+    */
+
+	/* enable PCIE atomic ops */
+	r = pci_enable_atomic_ops_to_root(odev->pdev,
+					  PCI_EXP_DEVCAP2_ATOMIC_COMP32 |
+					  PCI_EXP_DEVCAP2_ATOMIC_COMP64);
+	if (r) {
+		odev->have_atomics_support = false;
+		DRM_INFO("PCIE atomic ops is not supported\n");
+	} else {
+		odev->have_atomics_support = true;
+	}
+	amdgpu_device_get_pcie_info(odev);
+
+	/* early init functions */
+	// r = amdgpu_device_ip_early_init(adev);
+	if (r)
+		goto failed_unmap;
+
+	/* doorbell bar mapping and doorbell index init*/
+	amdgpu_device_doorbell_init(odev);
+
+	amdgpu_reset_init(odev);
+
+	pci_enable_pcie_error_reporting(odev->pdev);
+
+fence_driver_init:
+	/* Fence driver */
+	r = amdgpu_fence_driver_init(odev);
+
+	/* init the mode config */
+	drm_mode_config_init(adev_to_drm(adev));
+
+	r = amdgpu_device_ip_init(adev);
 
 	/*
-	 * calculate max size of runlist packet.
-	 * There can be only 2 packets at once
+	 * Register gpu instance before amdgpu_device_enable_mgpu_fan_boost.
+	 * Otherwise the mgpu fan boost feature will be skipped due to the
+	 * gpu instance is counted less.
 	 */
-	map_process_packet_size =
-			opu->device_info->asic_family == CHIP_ALDEBARAN ?
-				sizeof(struct pm4_mes_map_process_aldebaran) :
-					sizeof(struct pm4_mes_map_process);
-	size += (OPU_MAX_NUM_OF_PROCESSES * map_process_packet_size +
-		max_num_of_queues_per_device * sizeof(struct pm4_mes_map_queues)
-		+ sizeof(struct pm4_mes_runlist)) * 2;
+	amdgpu_register_gpu_instance(odev);
 
-	/* Add size of HIQ & DIQ */
-	size += OPU_KERNEL_QUEUE_SIZE * 2;
+	/* Have stored pci confspace at hand for restore in sudden PCI error */
+	if (amdgpu_device_cache_pci_state(odev->pdev))
+		pci_restore_state(pdev);
 
-	/* add another 512KB for all other allocations on gart (HPD, fences) */
-	size += 512 * 1024;
+	return 0;
 
-	if (amdgpu_amdopu_alloc_gtt_mem(
-			opu->kgd, size, &opu->gtt_mem,
-			&opu->gtt_start_gpu_addr, &opu->gtt_start_cpu_ptr,
-			false)) {
-		dev_err(opu_device, "Could not allocate %d bytes\n", size);
-		goto alloc_gtt_mem_failure;
-	}
+failed_unmap:
+	iounmap(odev->rmmio);
+	odev->rmmio = NULL;
 
-	dev_info(opu_device, "Allocated %d bytes on gart\n", size);
-
-	/* Initialize GTT sa with 512 byte chunk size */
-	if (opu_gtt_sa_init(opu, size, 512) != 0) {
-		dev_err(opu_device, "Error initializing gtt sub-allocator\n");
-		goto opu_gtt_sa_init_error;
-	}
-
-	if (opu_doorbell_init(opu)) {
-		dev_err(opu_device,
-			"Error initializing doorbell aperture\n");
-		goto opu_doorbell_error;
-	}
-
-	opu->hive_id = amdgpu_amdopu_get_hive_id(opu->kgd);
-
-	opu->noretry = amdgpu_amdopu_get_noretry(opu->kgd);
-
-	if (opu_interrupt_init(opu)) {
-		dev_err(opu_device, "Error initializing interrupts\n");
-		goto opu_interrupt_error;
-	}
-
-	opu->dqm = device_queue_manager_init(opu);
-	if (!opu->dqm) {
-		dev_err(opu_device, "Error initializing queue manager\n");
-		goto device_queue_manager_error;
-	}
-
-	/* If supported on this device, allocate global GWS that is shared
-	 * by all OPU processes
-	 */
-	if (opu_gws_init(opu)) {
-		dev_err(opu_device, "Could not allocate %d gws\n",
-			amdgpu_amdopu_get_num_gws(opu->kgd));
-		goto gws_error;
-	}
-
-	/* If CRAT is broken, won't set iommu enabled */
-	opu_double_confirm_iommu_support(opu);
-
-	if (opu_iommu_device_init(opu)) {
-		dev_err(opu_device, "Error initializing iommuv2\n");
-		goto device_iommu_error;
-	}
-
-	opu_cwsr_init(opu);
-
-	svm_migrate_init((struct amdgpu_device *)opu->kgd);
-
-	if (opu_resume(opu))
-		goto opu_resume_error;
-
-	opu->dbgmgr = NULL;
-
-	if (opu_topology_add_device(opu)) {
-		dev_err(opu_device, "Error adding device to topology\n");
-		goto opu_topology_add_device_error;
-	}
-
-	opu_smi_init(opu);
-
-	opu->init_complete = true;
-	dev_info(opu_device, "added device %x:%x\n", opu->pdev->vendor,
-		 opu->pdev->device);
-
-	pr_debug("Starting opu with the following scheduling policy %d\n",
-		opu->dqm->sched_policy);
-
-	goto out;
-
-opu_topology_add_device_error:
-opu_resume_error:
-device_iommu_error:
-gws_error:
-	device_queue_manager_uninit(opu->dqm);
-device_queue_manager_error:
-	opu_interrupt_exit(opu);
-opu_interrupt_error:
-	opu_doorbell_fini(opu);
-opu_doorbell_error:
-	opu_gtt_sa_fini(opu);
-opu_gtt_sa_init_error:
-	amdgpu_amdopu_free_gtt_mem(opu->kgd, opu->gtt_mem);
-alloc_gtt_mem_failure:
-	if (opu->gws)
-		amdgpu_amdopu_free_gws(opu->kgd, opu->gws);
-	dev_err(opu_device,
-		"device %x:%x NOT added due to errors\n",
-		opu->pdev->vendor, opu->pdev->device);
-out:
-	return opu->init_complete;
+	return r;
 }
+
 
 void kgd2opu_device_exit(struct opu_dev *opu)
 {
@@ -1373,6 +842,122 @@ int opu_debugfs_hang_hws(struct opu_dev *dev)
 		r = dqm_debugfs_execute_queues(dev->dqm);
 
 	return r;
+}
+
+/**
+ * amdgpu_device_fini - tear down the driver
+ *
+ * @adev: amdgpu_device pointer
+ *
+ * Tear down the driver info (all asics).
+ * Called at driver shutdown.
+ */
+void amdgpu_device_fini_hw(struct amdgpu_device *adev)
+{
+	dev_info(adev->dev, "amdgpu: finishing device.\n");
+	flush_delayed_work(&adev->delayed_init_work);
+	ttm_bo_lock_delayed_workqueue(&adev->mman.bdev);
+	adev->shutdown = true;
+
+	/* make sure IB test finished before entering exclusive mode
+	 * to avoid preemption on IB test
+	 * */
+	if (amdgpu_sriov_vf(adev)) {
+		amdgpu_virt_request_full_gpu(adev, false);
+		amdgpu_virt_fini_data_exchange(adev);
+	}
+
+	/* disable all interrupts */
+	amdgpu_irq_disable_all(adev);
+	if (adev->mode_info.mode_config_initialized){
+		if (!amdgpu_device_has_dc_support(adev))
+			drm_helper_force_disable_all(adev_to_drm(adev));
+		else
+			drm_atomic_helper_shutdown(adev_to_drm(adev));
+	}
+	amdgpu_fence_driver_fini_hw(adev);
+
+	if (adev->pm_sysfs_en)
+		amdgpu_pm_sysfs_fini(adev);
+	if (adev->ucode_sysfs_en)
+		amdgpu_ucode_sysfs_fini(adev);
+	sysfs_remove_files(&adev->dev->kobj, amdgpu_dev_attributes);
+
+	amdgpu_fbdev_fini(adev);
+
+	amdgpu_irq_fini_hw(adev);
+
+	amdgpu_device_ip_fini_early(adev);
+
+	amdgpu_gart_dummy_page_fini(adev);
+
+	amdgpu_device_unmap_mmio(adev);
+}
+
+/**
+ * amdgpu_device_check_arguments - validate module params
+ *
+ * @adev: amdgpu_device pointer
+ *
+ * Validates certain module parameters and updates
+ * the associated values used by the driver (all asics).
+ */
+static int amdgpu_device_check_arguments(struct amdgpu_device *adev)
+{
+	if (amdgpu_sched_jobs < 4) {
+		dev_warn(adev->dev, "sched jobs (%d) must be at least 4\n",
+			 amdgpu_sched_jobs);
+		amdgpu_sched_jobs = 4;
+	} else if (!is_power_of_2(amdgpu_sched_jobs)){
+		dev_warn(adev->dev, "sched jobs (%d) must be a power of 2\n",
+			 amdgpu_sched_jobs);
+		amdgpu_sched_jobs = roundup_pow_of_two(amdgpu_sched_jobs);
+	}
+
+	if (amdgpu_gart_size != -1 && amdgpu_gart_size < 32) {
+		/* gart size must be greater or equal to 32M */
+		dev_warn(adev->dev, "gart size (%d) too small\n",
+			 amdgpu_gart_size);
+		amdgpu_gart_size = -1;
+	}
+
+	if (amdgpu_gtt_size != -1 && amdgpu_gtt_size < 32) {
+		/* gtt size must be greater or equal to 32M */
+		dev_warn(adev->dev, "gtt size (%d) too small\n",
+				 amdgpu_gtt_size);
+		amdgpu_gtt_size = -1;
+	}
+
+	/* valid range is between 4 and 9 inclusive */
+	if (amdgpu_vm_fragment_size != -1 &&
+	    (amdgpu_vm_fragment_size > 9 || amdgpu_vm_fragment_size < 4)) {
+		dev_warn(adev->dev, "valid range is between 4 and 9\n");
+		amdgpu_vm_fragment_size = -1;
+	}
+
+	if (amdgpu_sched_hw_submission < 2) {
+		dev_warn(adev->dev, "sched hw submission jobs (%d) must be at least 2\n",
+			 amdgpu_sched_hw_submission);
+		amdgpu_sched_hw_submission = 2;
+	} else if (!is_power_of_2(amdgpu_sched_hw_submission)) {
+		dev_warn(adev->dev, "sched hw submission jobs (%d) must be a power of 2\n",
+			 amdgpu_sched_hw_submission);
+		amdgpu_sched_hw_submission = roundup_pow_of_two(amdgpu_sched_hw_submission);
+	}
+
+	amdgpu_device_check_smu_prv_buffer_size(adev);
+
+	amdgpu_device_check_vm_size(adev);
+
+	amdgpu_device_check_block_size(adev);
+
+	adev->firmware.load_type = amdgpu_ucode_get_load_type(adev, amdgpu_fw_load_type);
+
+	amdgpu_gmc_tmz_set(adev);
+
+	amdgpu_gmc_noretry_set(adev);
+
+	return 0;
 }
 
 #endif

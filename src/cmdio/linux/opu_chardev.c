@@ -17,9 +17,8 @@
 #include "opu_device_queue_manager.h"
 #include "opu_dbgmgr.h"
 #include "opu_svm.h"
-#include "amdgpu_amdopu.h"
+#include "opu.h"
 #include "opu_smi_events.h"
-
 static long opu_ioctl(struct file *, unsigned int, unsigned long);
 static int opu_open(struct inode *, struct file *);
 static int opu_release(struct inode *, struct file *);
@@ -40,6 +39,14 @@ static int opu_char_dev_major = -1;
 static struct class *opu_class;
 struct device *opu_device;
 
+static char *opu_devnode(struct device *dev, umode_t *mode)
+{
+    if (!mode)
+        return NULL;
+    *mode = 0666;
+    return NULL;
+}
+
 int opu_chardev_init(void)
 {
 	int err = 0;
@@ -54,12 +61,16 @@ int opu_chardev_init(void)
 	if (IS_ERR(opu_class))
 		goto err_class_create;
 
+    opu_class->devnode = opu_devnode;
 	opu_device = device_create(opu_class, NULL,
 					MKDEV(opu_char_dev_major, 0),
 					NULL, opu_dev_name);
 	err = PTR_ERR(opu_device);
 	if (IS_ERR(opu_device))
 		goto err_device_create;
+
+    // opu_cgroup_init();
+    // opu_ipc_init();
 
 	return 0;
 
@@ -116,6 +127,7 @@ static int opu_open(struct inode *inode, struct file *filep)
 
 	/* filep now owns the reference returned by opu_create_process */
 	filep->private_data = process;
+    // opu_unref_process(proces);
 
 	dev_dbg(opu_device, "process %d opened, compat mode (32 bit) - %d\n",
 		process->pasid, process->is_32bit_user_mode);
@@ -557,11 +569,6 @@ static int opu_ioctl_dbg_register(struct file *filep,
 	if (!dev)
 		return -EINVAL;
 
-	if (dev->device_info->asic_family == CHIP_CARRIZO) {
-		pr_debug("opu_ioctl_dbg_register not supported on CZ\n");
-		return -EINVAL;
-	}
-
 	mutex_lock(&p->mutex);
 	mutex_lock(opu_get_dbgmgr_mutex());
 
@@ -607,11 +614,6 @@ static int opu_ioctl_dbg_unregister(struct file *filep,
 	dev = opu_device_by_id(args->gpu_id);
 	if (!dev || !dev->dbgmgr)
 		return -EINVAL;
-
-	if (dev->device_info->asic_family == CHIP_CARRIZO) {
-		pr_debug("opu_ioctl_dbg_unregister not supported on CZ\n");
-		return -EINVAL;
-	}
 
 	mutex_lock(opu_get_dbgmgr_mutex());
 
@@ -1803,108 +1805,56 @@ static int opu_ioctl_svm(struct file *filep, struct opu_process *p, void *data)
 	[_IOC_NR(ioctl)] = {.cmd = ioctl, .func = _func, .flags = _flags, \
 			    .cmd_drv = 0, .name = #ioctl}
 
-/** Ioctl table */
-static const struct opu_ioctl_desc opu_ioctls[] = {
-	OPU_IOCTL_DEF(OPU_IOC_GET_VERSION,
-			opu_ioctl_get_version, 0),
+typedef int opu_ioctl_t(struct file *filep, struct opu_process *p,
+				void *data);
 
-	OPU_IOCTL_DEF(OPU_IOC_CREATE_QUEUE,
-			opu_ioctl_create_queue, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_DESTROY_QUEUE,
-			opu_ioctl_destroy_queue, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SET_MEMORY_POLICY,
-			opu_ioctl_set_memory_policy, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_GET_CLOCK_COUNTERS,
-			opu_ioctl_get_clock_counters, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_GET_PROCESS_APERTURES,
-			opu_ioctl_get_process_apertures, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_UPDATE_QUEUE,
-			opu_ioctl_update_queue, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_CREATE_EVENT,
-			opu_ioctl_create_event, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_DESTROY_EVENT,
-			opu_ioctl_destroy_event, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SET_EVENT,
-			opu_ioctl_set_event, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_RESET_EVENT,
-			opu_ioctl_reset_event, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_WAIT_EVENTS,
-			opu_ioctl_wait_events, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_DBG_REGISTER,
-			opu_ioctl_dbg_register, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_DBG_UNREGISTER,
-			opu_ioctl_dbg_unregister, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_DBG_ADDRESS_WATCH,
-			opu_ioctl_dbg_address_watch, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_DBG_WAVE_CONTROL,
-			opu_ioctl_dbg_wave_control, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SET_SCRATCH_BACKING_VA,
-			opu_ioctl_set_scratch_backing_va, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_GET_TILE_CONFIG,
-			opu_ioctl_get_tile_config, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SET_TRAP_HANDLER,
-			opu_ioctl_set_trap_handler, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_GET_PROCESS_APERTURES_NEW,
-			opu_ioctl_get_process_apertures_new, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_ACQUIRE_VM,
-			opu_ioctl_acquire_vm, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_ALLOC_MEMORY_OF_GPU,
-			opu_ioctl_alloc_memory_of_gpu, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_FREE_MEMORY_OF_GPU,
-			opu_ioctl_free_memory_of_gpu, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_MAP_MEMORY_TO_GPU,
-			opu_ioctl_map_memory_to_gpu, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_UNMAP_MEMORY_FROM_GPU,
-			opu_ioctl_unmap_memory_from_gpu, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SET_CU_MASK,
-			opu_ioctl_set_cu_mask, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_GET_QUEUE_WAVE_STATE,
-			opu_ioctl_get_queue_wave_state, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_GET_DMABUF_INFO,
-			opu_ioctl_get_dmabuf_info, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_IMPORT_DMABUF,
-			opu_ioctl_import_dmabuf, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_ALLOC_QUEUE_GWS,
-			opu_ioctl_alloc_queue_gws, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SMI_EVENTS,
-			opu_ioctl_smi_events, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SVM, opu_ioctl_svm, 0),
-
-	OPU_IOCTL_DEF(OPU_IOC_SET_XNACK_MODE,
-			opu_ioctl_set_xnack_mode, 0),
+struct opu_ioctl_desc {
+	unsigned int cmd;
+	int flags;
+	opu_ioctl_t *func;
+	unsigned int cmd_drv;
+	const char *name;
 };
 
-#define OPU_CORE_IOCTL_COUNT	ARRAY_SIZE(opu_ioctls)
+
+/** Ioctl table */
+static const struct opu_ioctl_desc opu_chardev_ioctls[] = {
+	OPU_IOCTL_DEF(OPU_IOC_GET_VERSION, opu_ioctl_get_version, 0),
+	OPU_IOCTL_DEF(OPU_IOC_CREATE_QUEUE, opu_ioctl_create_queue, 0),
+	OPU_IOCTL_DEF(OPU_IOC_DESTROY_QUEUE, opu_ioctl_destroy_queue, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SET_MEMORY_POLICY, opu_ioctl_set_memory_policy, 0),
+	OPU_IOCTL_DEF(OPU_IOC_GET_CLOCK_COUNTERS, opu_ioctl_get_clock_counters, 0),
+	OPU_IOCTL_DEF(OPU_IOC_GET_PROCESS_APERTURES, opu_ioctl_get_process_apertures, 0),
+	OPU_IOCTL_DEF(OPU_IOC_UPDATE_QUEUE, opu_ioctl_update_queue, 0),
+	OPU_IOCTL_DEF(OPU_IOC_CREATE_EVENT, opu_ioctl_create_event, 0),
+	OPU_IOCTL_DEF(OPU_IOC_DESTROY_EVENT, opu_ioctl_destroy_event, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SET_EVENT, opu_ioctl_set_event, 0),
+	OPU_IOCTL_DEF(OPU_IOC_RESET_EVENT, opu_ioctl_reset_event, 0),
+	OPU_IOCTL_DEF(OPU_IOC_WAIT_EVENTS, opu_ioctl_wait_events, 0),
+	OPU_IOCTL_DEF(OPU_IOC_DBG_REGISTER, opu_ioctl_dbg_register, 0),
+	OPU_IOCTL_DEF(OPU_IOC_DBG_UNREGISTER, opu_ioctl_dbg_unregister, 0),
+	OPU_IOCTL_DEF(OPU_IOC_DBG_ADDRESS_WATCH, opu_ioctl_dbg_address_watch, 0),
+	OPU_IOCTL_DEF(OPU_IOC_DBG_WAVE_CONTROL, opu_ioctl_dbg_wave_control, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SET_SCRATCH_BACKING_VA, opu_ioctl_set_scratch_backing_va, 0),
+	OPU_IOCTL_DEF(OPU_IOC_GET_TILE_CONFIG, opu_ioctl_get_tile_config, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SET_TRAP_HANDLER, opu_ioctl_set_trap_handler, 0),
+	OPU_IOCTL_DEF(OPU_IOC_GET_PROCESS_APERTURES_NEW, opu_ioctl_get_process_apertures_new, 0),
+	OPU_IOCTL_DEF(OPU_IOC_ACQUIRE_VM, opu_ioctl_acquire_vm, 0),
+	OPU_IOCTL_DEF(OPU_IOC_ALLOC_MEMORY_OF_GPU, opu_ioctl_alloc_memory_of_gpu, 0),
+	OPU_IOCTL_DEF(OPU_IOC_FREE_MEMORY_OF_GPU, opu_ioctl_free_memory_of_gpu, 0),
+	OPU_IOCTL_DEF(OPU_IOC_MAP_MEMORY_TO_GPU, opu_ioctl_map_memory_to_gpu, 0),
+	OPU_IOCTL_DEF(OPU_IOC_UNMAP_MEMORY_FROM_GPU, opu_ioctl_unmap_memory_from_gpu, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SET_CU_MASK, opu_ioctl_set_cu_mask, 0),
+	OPU_IOCTL_DEF(OPU_IOC_GET_QUEUE_WAVE_STATE, opu_ioctl_get_queue_wave_state, 0),
+	OPU_IOCTL_DEF(OPU_IOC_GET_DMABUF_INFO, opu_ioctl_get_dmabuf_info, 0),
+	OPU_IOCTL_DEF(OPU_IOC_IMPORT_DMABUF, opu_ioctl_import_dmabuf, 0),
+	OPU_IOCTL_DEF(OPU_IOC_ALLOC_QUEUE_GWS, opu_ioctl_alloc_queue_gws, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SMI_EVENTS, opu_ioctl_smi_events, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SVM, opu_ioctl_svm, 0),
+	OPU_IOCTL_DEF(OPU_IOC_SET_XNACK_MODE, opu_ioctl_set_xnack_mode, 0),
+};
+
+#define OPU_CORE_IOCTL_COUNT	ARRAY_SIZE(opu_chardev_ioctls)
 
 static long opu_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 {
@@ -1923,7 +1873,7 @@ static long opu_ioctl(struct file *filep, unsigned int cmd, unsigned long arg)
 	if ((nr >= OPU_COMMAND_START) && (nr < OPU_COMMAND_END)) {
 		u32 opu_size;
 
-		ioctl = &opu_ioctls[nr];
+		ioctl = &opu_chardev_ioctls[nr];
 
 		opu_size = _IOC_SIZE(ioctl->cmd);
 		usize = asize = _IOC_SIZE(cmd);

@@ -1,27 +1,36 @@
-
 #include <linux/sched.h>
 #include <linux/device.h>
 #include "opu_priv.h"
-#include "amdgpu_amdopu.h"
+// #include "amdgpu_amdopu.h"
+//
 
-static int opu_init(void)
+uint32_t    global_opuid = 0;
+struct  opu_va_mgr *g_opu_va_mgr = NULL;
+
+static void opu_init_setting(void)
+{
+    opu_setting_page_order = opu_setting_page_order != 0xffffffff ?
+        min(opu_setting_page_order, 10u)  : opu_setting_page_order;
+
+    opu_setting_page_scheme = min(opu_setting_page_scheme, OPU_PAGE_TABLE_SCHEME_STATIC);
+}
+
+static int __init opu_init(void)
 {
 	int err;
 
-	/* Verify module parameters */
-	if ((sched_policy < OPU_SCHED_POLICY_HWS) ||
-		(sched_policy > OPU_SCHED_POLICY_NO_HWS)) {
-		pr_err("sched_policy has invalid value\n");
-		return -EINVAL;
-	}
+    // adapt driver drm version info
+    char ver[] = DRIVER_VERSION;
+    char *tmp = ver;
+    char *cur = strsep(&tmp, ".");
 
-	/* Verify module parameters */
-	if ((max_num_of_queues_per_device < 1) ||
-		(max_num_of_queues_per_device >
-			OPU_MAX_NUM_OF_QUEUES_PER_DEVICE)) {
-		pr_err("max_num_of_queues_per_device must be between 1 to OPU_MAX_NUM_OF_QUEUES_PER_DEVICE\n");
-		return -EINVAL;
-	}
+    opu_drm_driver.major = simple_strtol(cur, NULL, 0);
+    cur = strsep(&tmp, ".");
+    opu_drm_driver.minor = simple_strtol(cur, NULL, 0);
+    cur = strsep(&tmp, ".");
+    opu_drm_driver.patchlevel = simple_strtol(cur, NULL, 0);
+
+    opu_init_setting();
 
 	err = opu_chardev_init();
 	if (err < 0)
@@ -31,43 +40,56 @@ static int opu_init(void)
 	if (err < 0)
 		goto err_topology;
 
+    err = opu_deps_init();
+	if (err < 0)
+		goto err_deps;
+
+    err = opu_fence_slab_init();
+	if (err < 0)
+		goto err_fence;
+
 	err = opu_process_create_wq();
 	if (err < 0)
 		goto err_create_wq;
 
-	/* Ignore the return value, so that we can continue
-	 * to init the OPU, even if procfs isn't craated
-	 */
+    err = pci_register_driver(&opu_pci_driver);
+
 	opu_procfs_init();
 
 	opu_debugfs_init();
 
 	return 0;
 
+err_register_pci:
+    pci_unregister_driver(&opu_pci_driver);
 err_create_wq:
-	opu_topology_shutdown();
+	opu_process_destroy_wq();
+err_fence:
+	opu_fence_slab_fini();
+err_deps:
+	opu_deps_fini();
 err_topology:
+	opu_topology_shutdown();
+err_chardev:
 	opu_chardev_exit();
 err_ioctl:
 	pr_err("OPU is disabled due to module initialization failure\n");
 	return err;
 }
 
-static void opu_exit(void)
+
+static void __exit opu_exit(void)
 {
+    DRM_INFO("OPU Driver Exit");
+    pci_unregister(&opu_pci_driver);
 	opu_debugfs_fini();
+	opu_fence_slab_fini();
+	opu_deps_fini();
 	opu_process_destroy_wq();
 	opu_procfs_shutdown();
 	opu_topology_shutdown();
 	opu_chardev_exit();
 }
 
-int kgd2opu_init(void)
-{
-	return opu_init();
-}
-
-void kgd2opu_exit(void)
-{
-	opu_exit();
-}
+module_init(opu_init);
+module_exit(opu_exit);

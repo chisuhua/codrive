@@ -1,4 +1,3 @@
-
 #ifndef OPU_PRIV_H_INCLUDED
 #define OPU_PRIV_H_INCLUDED
 
@@ -24,7 +23,7 @@
 #include <linux/swap.h>
 
 //#include "amd_shared.h"
-//#include "amdgpu.h"
+#include "opu.h"
 
 #define OPU_MAX_RING_ENTRY_SIZE	8
 
@@ -56,22 +55,9 @@
 #define OPU_MMAP_GET_GPU_ID(offset)    ((offset & OPU_MMAP_GPU_ID_MASK) \
 				>> OPU_MMAP_GPU_ID_SHIFT)
 
-/*
- * When working with cp scheduler we should assign the HIQ manually or via
- * the amdgpu driver to a fixed hqd slot, here are the fixed HIQ hqd slot
- * definitions for Kaveri. In Kaveri only the first ME queues participates
- * in the cp scheduling taking that in mind we set the HIQ slot in the
- * second ME.
- */
-#define OPU_CIK_HIQ_PIPE 4
-#define OPU_CIK_HIQ_QUEUE 0
-
 /* Macro for allocating structures */
 #define opu_alloc_struct(ptr_to_struct)	\
 	((typeof(ptr_to_struct)) kzalloc(sizeof(*ptr_to_struct), GFP_KERNEL))
-
-#define OPU_MAX_NUM_OF_PROCESSES 512
-#define OPU_MAX_NUM_OF_QUEUES_PER_PROCESS 1024
 
 /*
  * Size of the per-process TBA+TMA buffer: 2 pages
@@ -82,23 +68,9 @@
 #define OPU_CWSR_TBA_TMA_SIZE (PAGE_SIZE * 2)
 #define OPU_CWSR_TMA_OFFSET PAGE_SIZE
 
-#define OPU_MAX_NUM_OF_QUEUES_PER_DEVICE		\
-	(OPU_MAX_NUM_OF_PROCESSES *			\
-			OPU_MAX_NUM_OF_QUEUES_PER_PROCESS)
 
-#define OPU_KERNEL_QUEUE_SIZE 2048
 
 #define OPU_UNMAP_LATENCY_MS	(4000)
-
-/*
- * 512 = 0x200
- * The doorbell index distance between SDMA RLC (2*i) and (2*i+1) in the
- * same SDMA engine on SOC15, which has 8-byte doorbells for SDMA.
- * 512 8-byte doorbell distance (i.e. one page away) ensures that SDMA RLC
- * (2*i+1) doorbells (in terms of the lower 12 bit address) lie exactly in
- * the OFFSET and SIZE set in registers like BIF_SDMA0_DOORBELL_RANGE.
- */
-#define OPU_QUEUE_DOORBELL_MIRROR_OFFSET 512
 
 
 /*
@@ -173,6 +145,31 @@ struct opu_event_interrupt_class {
 };
 */
 
+struct core_vm_fault_info {
+	uint64_t	page_addr;
+	uint32_t	vmid;
+	uint32_t	mc_id;
+	uint32_t	status;
+	bool		prot_valid;
+	bool		prot_read;
+	bool		prot_write;
+	bool		prot_exec;
+};
+
+/* For getting GPU local memory information from KGD */
+struct core_local_mem_info {
+	uint64_t local_mem_size_private;
+	uint64_t local_mem_size_public;
+	uint32_t vram_width;
+	uint32_t mem_clk_max;
+};
+
+enum core_memory_pool {
+	CORE_POOL_SYSTEM_CACHEABLE = 1,
+	CORE_POOL_SYSTEM_WRITECOMBINE = 2,
+	CORE_POOL_FRAMEBUFFER = 3,
+};
+
 struct opu_device_info {
 	//enum amd_asic_type asic_family;
 	//const char *asic_name;
@@ -199,113 +196,6 @@ struct opu_mem_obj {
 	void *gtt_mem;
 };
 
-struct opu_vmid_info {
-	uint32_t first_vmid_opu;
-	uint32_t last_vmid_opu;
-	uint32_t vmid_num_opu;
-};
-
-struct opu_dev {
-	struct kgd_dev *kgd;
-
-	const struct opu_device_info *device_info;
-	struct pci_dev *pdev;
-	struct drm_device *ddev;
-
-	unsigned int id;		/* topology stub index */
-
-	phys_addr_t doorbell_base;	/* Start of actual doorbells used by
-					 * OPU. It is aligned for mapping
-					 * into user mode
-					 */
-	size_t doorbell_base_dw_offset;	/* Offset from the start of the PCI
-					 * doorbell BAR to the first OPU
-					 * doorbell in dwords. GFX reserves
-					 * the segment before this offset.
-					 */
-	u32 __iomem *doorbell_kernel_ptr; /* This is a pointer for a doorbells
-					   * page used by kernel queue
-					   */
-
-	// struct kgd2opu_shared_resources shared_resources;
-	struct opu_vmid_info vm_info;
-
-	const struct opu2kgd_calls *opu2kgd;
-	struct mutex doorbell_mutex;
-	DECLARE_BITMAP(doorbell_available_index,
-			OPU_MAX_NUM_OF_QUEUES_PER_PROCESS);
-
-	void *gtt_mem;
-	uint64_t gtt_start_gpu_addr;
-	void *gtt_start_cpu_ptr;
-	void *gtt_sa_bitmap;
-	struct mutex gtt_sa_lock;
-	unsigned int gtt_sa_chunk_size;
-	unsigned int gtt_sa_num_of_chunks;
-
-	/* Interrupts */
-	struct kfifo ih_fifo;
-	struct workqueue_struct *ih_wq;
-	struct work_struct interrupt_work;
-	spinlock_t interrupt_lock;
-
-	/* QCM Device instance */
-	struct device_queue_manager *dqm;
-
-	bool init_complete;
-	/*
-	 * Interrupts of interest to OPU are copied
-	 * from the HW ring into a SW ring.
-	 */
-	bool interrupts_active;
-
-	/* Debug manager */
-	struct opu_dbgmgr *dbgmgr;
-
-	/* Firmware versions */
-	uint16_t mec_fw_version;
-	uint16_t mec2_fw_version;
-	uint16_t sdma_fw_version;
-
-	/* Maximum process number mapped to HW scheduler */
-	unsigned int max_proc_per_quantum;
-
-	/* CWSR */
-	bool cwsr_enabled;
-	const void *cwsr_isa;
-	unsigned int cwsr_isa_size;
-
-	/* xGMI */
-	uint64_t hive_id;
-
-	bool pci_atomic_requested;
-
-	/* Use IOMMU v2 flag */
-	bool use_iommu_v2;
-
-	/* SRAM ECC flag */
-	atomic_t sram_ecc_flag;
-
-	/* Compute Profile ref. count */
-	atomic_t compute_profile;
-
-	/* Global GWS resource shared between processes */
-	void *gws;
-
-	/* Clients watching SMI events */
-	struct list_head smi_clients;
-	spinlock_t smi_lock;
-
-	uint32_t reset_seq_num;
-
-	struct ida doorbell_ida;
-	unsigned int max_doorbell_slices;
-
-	int noretry;
-
-	/* HMM page migration MEMORY_DEVICE_PRIVATE mapping */
-	struct dev_pagemap pgmap;
-};
 
 enum opu_mempool {
 	OPU_MEMPOOL_SYSTEM_CACHEABLE = 1,
@@ -824,28 +714,9 @@ struct opu_process {
 extern DECLARE_HASHTABLE(opu_processes_table, OPU_PROCESS_TABLE_SIZE);
 extern struct srcu_struct opu_processes_srcu;
 
-/**
- * typedef amdopu_ioctl_t - typedef for ioctl function pointer.
- *
- * @filep: pointer to file structure.
- * @p: amdopu process pointer.
- * @data: pointer to arg that was copied from user.
- *
- * Return: returns ioctl completion code.
- */
-typedef int amdopu_ioctl_t(struct file *filep, struct opu_process *p,
-				void *data);
-
-struct amdopu_ioctl_desc {
-	unsigned int cmd;
-	int flags;
-	amdopu_ioctl_t *func;
-	unsigned int cmd_drv;
-	const char *name;
-};
 bool opu_dev_is_large_bar(struct opu_dev *dev);
 
-int opu_process_create_wq(void);
+
 void opu_process_destroy_wq(void);
 struct opu_process *opu_create_process(struct file *filep);
 struct opu_process *opu_get_process(const struct task_struct *);
@@ -959,7 +830,7 @@ bool interrupt_is_wanted(struct opu_dev *dev,
 				const uint32_t *ih_ring_entry,
 				uint32_t *patched_ihre, bool *flag);
 
-/* amdopu Apertures */
+/* opu Apertures */
 int opu_init_apertures(struct opu_process *process);
 
 void opu_process_set_trap_handler(struct qcm_process_device *qpd,
@@ -972,6 +843,7 @@ void uninit_queue(struct queue *q);
 void print_queue_properties(struct queue_properties *q);
 void print_queue(struct queue *q);
 
+/*
 struct mqd_manager *mqd_manager_init_cik(enum OPU_MQD_TYPE type,
 		struct opu_dev *dev);
 struct mqd_manager *mqd_manager_init_cik_hawaii(enum OPU_MQD_TYPE type,
@@ -984,6 +856,8 @@ struct mqd_manager *mqd_manager_init_v9(enum OPU_MQD_TYPE type,
 		struct opu_dev *dev);
 struct mqd_manager *mqd_manager_init_v10(enum OPU_MQD_TYPE type,
 		struct opu_dev *dev);
+*/
+
 struct device_queue_manager *device_queue_manager_init(struct opu_dev *dev);
 void device_queue_manager_uninit(struct device_queue_manager *dqm);
 struct kernel_queue *kernel_queue_init(struct opu_dev *dev,
@@ -1025,7 +899,7 @@ int pqm_get_wave_state(struct process_queue_manager *pqm,
 		       u32 *ctl_stack_used_size,
 		       u32 *save_area_used_size);
 
-int amdopu_fence_wait_timeout(uint64_t *fence_addr,
+int opu_fence_wait_timeout(uint64_t *fence_addr,
 			      uint64_t fence_value,
 			      unsigned int timeout_ms);
 

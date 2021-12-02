@@ -1,0 +1,112 @@
+
+namespace hip_impl {
+hsa_executable_t executable_for(hipModule_t);
+const std::string& hash_for(hipModule_t);
+
+template<typename ForwardIterator>
+std::pair<hipDeviceptr_t, std::size_t> read_global_description(
+    ForwardIterator f, ForwardIterator l, const char* name) {
+    const auto it = std::find_if(f, l, [=](const Agent_global& x) {
+        return x.name == name;
+    });
+
+    return it == l ?
+        std::make_pair(nullptr, 0u) : std::make_pair(it->address, it->byte_cnt);
+}
+
+std::vector<Agent_global> read_agent_globals(hsa_agent_t agent,
+                                             hsa_executable_t executable);
+hsa_agent_t this_agent();
+
+inline
+__attribute__((visibility("hidden")))
+hipError_t read_agent_global_from_module(hipDeviceptr_t* dptr, size_t* bytes,
+                                         hipModule_t hmod, const char* name) {
+    // the key of the map would the hash of code object associated with the
+    // hipModule_t instance
+    static std::unordered_map<
+        std::string, std::vector<Agent_global>> agent_globals;
+    auto key = hash_for(hmod);
+
+    if (agent_globals.count(key) == 0) {
+        static std::mutex mtx;
+        std::lock_guard<std::mutex> lck{mtx};
+
+        if (agent_globals.count(key) == 0) {
+            agent_globals.emplace(
+                key, read_agent_globals(this_agent(), executable_for(hmod)));
+        }
+    }
+
+    const auto it0 = agent_globals.find(key);
+    if (it0 == agent_globals.cend()) {
+        hip_throw(
+            std::runtime_error{"agent_globals data structure corrupted."});
+    }
+
+    std::tie(*dptr, *bytes) = read_global_description(it0->second.cbegin(),
+                                                      it0->second.cend(), name);
+
+    return *dptr ? hipSuccess : hipErrorNotFound;
+}
+
+inline
+__attribute__((visibility("hidden")))
+hipError_t read_agent_global_from_process(hipDeviceptr_t* dptr, size_t* bytes,
+                                          const char* name) {
+    static std::unordered_map<
+        hsa_agent_t, std::vector<Agent_global>> agent_globals;
+    static std::once_flag f;
+
+    std::call_once(f, []() {
+        for (auto&& agent_executables : executables()) {
+            std::vector<Agent_global> tmp0;
+            for (auto&& executable : agent_executables.second) {
+                auto tmp1 = read_agent_globals(agent_executables.first,
+                                               executable);
+
+                tmp0.insert(tmp0.end(), make_move_iterator(tmp1.begin()),
+                            make_move_iterator(tmp1.end()));
+            }
+            agent_globals.emplace(agent_executables.first, move(tmp0));
+        }
+    });
+
+    const auto it = agent_globals.find(this_agent());
+
+    if (it == agent_globals.cend()) return hipErrorNotInitialized;
+
+    std::tie(*dptr, *bytes) = read_global_description(it->second.cbegin(),
+                                                      it->second.cend(), name);
+
+    return *dptr ? hipSuccess : hipErrorNotFound;
+}
+} // Namespace hip_impl.
+
+
+/**
+ * @brief returns device memory pointer and size of the kernel present in the module with symbol @p
+ * name
+ *
+ * @param [out] dptr
+ * @param [out] bytes
+ * @param [in] hmod
+ * @param [in] name
+ *
+ * @returns hipSuccess, hipErrorInvalidValue, hipErrorNotInitialized
+ */
+inline
+__attribute__((visibility("hidden")))
+hipError_t hipModuleGetGlobal(hipDeviceptr_t* dptr, size_t* bytes,
+                              hipModule_t hmod, const char* name) {
+    if (!dptr || !bytes) return hipErrorInvalidValue;
+
+    if (!name) return hipErrorNotInitialized;
+
+    const auto r = hmod ?
+        hip_impl::read_agent_global_from_module(dptr, bytes, hmod, name) :
+        hip_impl::read_agent_global_from_process(dptr, bytes, name);
+
+    return r;
+}
+

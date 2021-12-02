@@ -20,7 +20,19 @@ else
 
 	KBUILD_EXTRA_SYMBOLS := $(PWD)/Module.symvers
 	ccflags-y += -I$(src)/.. -I$(src)/include
-	opu-y += opu_chardev.o	\
+	opu-y += opu_chardev.o
+	opu-x += opu_chardev.o	\
+			opu_acpi.o		\
+			opu_core.o		\
+			opu_chip.o		\
+			opu_kms.o		\
+			opu_kernel_queue.o		\
+			opu_device_queue_manager.o		\
+			opu_process_queue_manager.o		\
+			opu_core_asic_v1.o		\
+			opu_deps.o		\
+			opu_fence.o		\
+			opu_drv.o		\
 			opu_crat.o		\
 			opu_dbgdev.o	\
 			opu_dbgmgr.o	\
@@ -28,7 +40,7 @@ else
 			opu_doorbell.o	\
 			opu_events.o	\
 			opu_flat_memory.o	\
-			opu_interrupt.o	\
+			opu_irq.o	\
 			opu_iommu.o		\
 			opu_migrate.o	\
 			opu_module.o	\

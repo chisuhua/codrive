@@ -328,30 +328,6 @@ out:
 	return err;
 }
 
-static const struct hsa_device_table *find_hsa_device(uint16_t device_id)
-{
-	uint32_t i, table_size;
-
-	table_size = sizeof(device_lookup_table)/sizeof(struct hsa_device_table);
-	for (i = 0; i < table_size; i++) {
-		if (device_lookup_table[i].device_id == device_id)
-			return &device_lookup_table[i];
-	}
-	return NULL;
-}
-
-device_status_t topology_get_asic_family(uint16_t device_id,
-					enum asic_family_type *asic)
-{
-	const struct hsa_device_table *hsa_device =
-				find_hsa_device(device_id);
-
-	if (!hsa_device)
-		return DEVICE_STATUS_ERROR;
-
-	*asic = hsa_device->asic_family;
-	return DEVICE_STATUS_SUCCESS;
-}
 /*
 bool topology_is_dgpu(uint16_t device_id)
 {

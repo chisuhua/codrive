@@ -1,0 +1,7 @@
+#!/bin/bash
+
+SOURCE="${BASH_SOURCE[0]}"
+HIP_PATH="$( command cd -P "$( dirname "$SOURCE" )/.." && pwd )"
+# TODO schi change since $1 is valid input object
+#HCC_HOME=$1 $HIP_PATH/bin/hipcc "${@:2}"
+$HIP_PATH/bin/hipcc "${@:1}"

@@ -549,7 +549,7 @@ DeviceQueryDebugEvent(
 		uint32_t		Pid, // IN
 		uint32_t		*QueueId, // IN/OUT
 		bool			ClearEvents, // IN
-		HSA_DEBUG_EVENT_TYPE	*EventsReceived, // OUT
+		DEBUG_EVENT_TYPE	*EventsReceived, // OUT
 		bool			*IsSuspended, // OUT
 		bool			*IsNew // OUT
 		)
@@ -574,7 +574,7 @@ DeviceQueryDebugEvent(
 		return result;
 
 	*QueueId = argout.data1;
-	*EventsReceived = (HSA_DEBUG_EVENT_TYPE)(argout.data3 & (KFD_DBG_EV_STATUS_TRAP | KFD_DBG_EV_STATUS_VMFAULT));
+	*EventsReceived = (DEBUG_EVENT_TYPE)(argout.data3 & (KFD_DBG_EV_STATUS_TRAP | KFD_DBG_EV_STATUS_VMFAULT));
 	*IsSuspended = argout.data3 & KFD_DBG_EV_STATUS_SUSPENDED;
 	*IsNew = argout.data3 & KFD_DBG_EV_STATUS_NEW_QUEUE;
 
