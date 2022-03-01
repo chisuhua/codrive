@@ -118,37 +118,37 @@ cmdio_inc += LINUX_SRC + '/arch/x86/include/generated'
 cmdio_inc += LINUX_SRC + '/arch/x86/include/'
 
 cmdio_src = [
-  'src/cmdio/cmdio_api.cpp',
-  'src/cmdio/linux/opu_core.c',
-  'src/cmdio/linux/opu_chip.c',
-  'src/cmdio/linux/opu_deps.c',
-  'src/cmdio/linux/opu_drv.c',
-  'src/cmdio/linux/opu_fence.c',
-  'src/cmdio/linux/opu_kms.c',
-  'src/cmdio/linux/opu_module.c',
-  'src/cmdio/linux/opu_core_asic_v1.c',
-  'src/cmdio/linux/opu_chardev.c',
-  'src/cmdio/linux/opu_crat.c',
-  'src/cmdio/linux/opu_dbgdev.c',
-  'src/cmdio/linux/opu_dbgmgr.c',
-  'src/cmdio/linux/opu_device.c',
-  'src/cmdio/linux/opu_doorbell.c',
-  'src/cmdio/linux/opu_events.c',
-  'src/cmdio/linux/opu_flat_memory.c',
-  'src/cmdio/linux/opu_interrupt.c',
-  'src/cmdio/linux/opu_iommu.c',
-  'src/cmdio/linux/opu_migrate.c',
-  'src/cmdio/linux/opu_module.c',
-  'src/cmdio/linux/opu_pasid.c',
-  'src/cmdio/linux/opu_process.c',
-  'src/cmdio/linux/opu_queue.c',
-  'src/cmdio/linux/opu_svm.c',
-  'src/cmdio/linux/opu_topology.c',
-  'src/cmdio/linux/opu_acpi.c'
+  'src/cmdio/cmdio_api.cpp'
+#  'src/cmdio/linux/opu_core.c',
+#  'src/cmdio/linux/opu_chip.c',
+#  'src/cmdio/linux/opu_deps.c',
+#  'src/cmdio/linux/opu_drv.c',
+#  'src/cmdio/linux/opu_fence.c',
+#  'src/cmdio/linux/opu_kms.c',
+#  'src/cmdio/linux/opu_module.c',
+#  'src/cmdio/linux/opu_core_asic_v1.c',
+#  'src/cmdio/linux/opu_chardev.c',
+#  'src/cmdio/linux/opu_crat.c',
+#  'src/cmdio/linux/opu_dbgdev.c',
+#  'src/cmdio/linux/opu_dbgmgr.c',
+#  'src/cmdio/linux/opu_device.c',
+#  'src/cmdio/linux/opu_doorbell.c',
+#  'src/cmdio/linux/opu_events.c',
+#  'src/cmdio/linux/opu_flat_memory.c',
+#  'src/cmdio/linux/opu_interrupt.c',
+#  'src/cmdio/linux/opu_iommu.c',
+#  'src/cmdio/linux/opu_migrate.c',
+#  'src/cmdio/linux/opu_module.c',
+#  'src/cmdio/linux/opu_pasid.c',
+#  'src/cmdio/linux/opu_process.c',
+#  'src/cmdio/linux/opu_queue.c',
+#  'src/cmdio/linux/opu_svm.c',
+#  'src/cmdio/linux/opu_topology.c',
+#  'src/cmdio/linux/opu_acpi.c'
   ]
 
 #codrive_link_args = link_args + ['-Wl,--version-script='+codrive_symbol_list]
-codrive_link_args = link_args + ['-lpthread']
+codrive_link_args = link_args + ['-lpthread', '-lcmdio']
 cmdio_link_args = link_args + ['-lpthread']
 
 codrive = shared_library(

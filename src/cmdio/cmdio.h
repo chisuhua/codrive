@@ -597,7 +597,7 @@ typedef struct cpu_cacheinfo {
 	HsaCacheProperties *cache_prop; /* a list of cache properties */
 } cpu_cacheinfo_t;
 
-enum cache_type {
+enum opu_cache_type {
 	CACHE_TYPE_NULL = 0,
 	CACHE_TYPE_DATA = 1,
 	CACHE_TYPE_INST = 2,
